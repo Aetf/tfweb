@@ -1,6 +1,7 @@
 import base64
 import json
 import urllib.request
+from io import BytesIO
 
 import numpy as np
 
@@ -16,6 +17,8 @@ class JsonHandler(object):
 
     def decoder(self, data_str):
         def hook(d):
+            if 'npy' in d:
+                return np.load(BytesIO(base64.b64decode(d['npy'])))
             if 'b64' in d:
                 return base64.b64decode(d['b64'])
             if 'url' in d:
