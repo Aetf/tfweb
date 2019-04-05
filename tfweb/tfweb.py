@@ -111,6 +111,11 @@ def main(args):
             default=50051,
             help='Port accepting grpc requests')
     parser.add_argument(
+            '--grpc',
+            action='store_true',
+            help='Enable gRPC server'
+    )
+    parser.add_argument(
             '--port',
             type=int,
             default=8080,
@@ -127,7 +132,8 @@ def main(args):
 
     web_app, grpc_app = loop.run_until_complete(init(loop, args))
 
-    loop.run_until_complete(grpc_app.start('0.0.0.0', args.grpc_port))
+    if args.grpc:
+        loop.run_until_complete(grpc_app.start('0.0.0.0', args.grpc_port))
 
     try:
         web.run_app(web_app, port= args.port)
