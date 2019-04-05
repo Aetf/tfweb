@@ -70,6 +70,21 @@ async def init(loop, args):
     return web_app, grpc_app
 
 
+def pidfile_args(args):
+    if args.listen == '0.0.0.0':
+        import socket
+        ip = socket.gethostbyname(socket.gethostname())
+    else:
+        ip = args.listen
+    port = args.port
+    return {
+        'piddir': args.piddir,
+        'pidname': '{}:{}'.format(ip, port),
+        'enforce_dotpid_postfix': False,
+        'lock_pidfile': False,
+    }
+
+
 def main(args):
     parser = argparse.ArgumentParser(description='tfweb')
     parser.add_argument(
@@ -113,32 +128,47 @@ def main(args):
     parser.add_argument(
             '--grpc',
             action='store_true',
-            help='Enable gRPC server'
-    )
+            help='Enable gRPC server')
     parser.add_argument(
             '--port',
             type=int,
             default=8080,
             help='tfweb model access port')
     parser.add_argument(
+            '-l', '--listen',
+            type=str,
+            default='0.0.0.0',
+            help='IP address to listen')
+    parser.add_argument(
             '--sess_target',
             type=str,
             default='zrpc://tcp://localhost:5501',
             help='session target for executing inference jobs')
+    parser.add_argument(
+            '--piddir',
+            type=str,
+            help='write to a pidfile under the given directory')
     args = parser.parse_args(args)
 
-    uvloop.install()
-    loop = asyncio.get_event_loop()
+    def serve():
+        uvloop.install()
+        loop = asyncio.get_event_loop()
 
-    web_app, grpc_app = loop.run_until_complete(init(loop, args))
+        web_app, grpc_app = loop.run_until_complete(init(loop, args))
 
-    if args.grpc:
-        loop.run_until_complete(grpc_app.start('0.0.0.0', args.grpc_port))
+        if args.grpc:
+                loop.run_until_complete(grpc_app.start(args.listen, args.grpc_port))
 
-    try:
-        web.run_app(web_app, port= args.port)
-    except asyncio.CancelledError:
-        pass
+        try:
+                web.run_app(web_app, host=args.listen, port=args.port)
+        except asyncio.CancelledError:
+                pass
+
+    if args.piddir is not None:
+        with pid.PidFile(**pidfile_args(args)) as pf:
+            serve()
+    else:
+        serve()
 
 
 if __name__ == '__main__':
