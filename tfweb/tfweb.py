@@ -117,7 +117,7 @@ def main(args):
     parser.add_argument(
             '--sess_target',
             type=str,
-            default='zrpc://tpc://localhost:5501',
+            default='zrpc://tcp://localhost:5501',
             help='session target for executing inference jobs')
     args = parser.parse_args(args)
 
