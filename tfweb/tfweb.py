@@ -2,6 +2,7 @@ import sys
 import argparse
 
 import asyncio
+import uvloop
 
 from aiohttp import web
 import aiohttp_cors
@@ -121,6 +122,7 @@ def main(args):
             help='session target for executing inference jobs')
     args = parser.parse_args(args)
 
+    uvloop.install()
     loop = asyncio.get_event_loop()
 
     web_app, grpc_app = loop.run_until_complete(init(loop, args))

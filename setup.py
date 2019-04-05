@@ -27,6 +27,6 @@ setup(name='tfweb',
       ],
       keywords=['serving', 'tensorflow', 'asyncio', 'aiohttp', 'grpc'],
       packages=["tfweb"],
-      install_requires=['aiohttp>=2', 'aiohttp_cors>=0.7', 'grpclib>=0.1'],
+      install_requires=['aiohttp>=2', 'aiohttp_cors>=0.7', 'grpclib>=0.1', 'uvloop>=0.12'],
       python_requires='>=3.5',
       scripts=['bin/tfweb'])
