@@ -1,20 +1,45 @@
 import tensorflow as tf
+
+from tensorflow.core.protobuf import saved_model_pb2, meta_graph_pb2
 import numpy as np
 import functools
 
 dir(tf.contrib)  # contrib ops lazily loaded
 
 
+def load_saved_model(export_dir, tags):
+    saved_model = tf.saved_model.loader_impl._parse_saved_model(export_dir)
+    for meta_graph_def in saved_model.meta_graphs:
+        if set(meta_graph_def.meta_info_def.tags) == set(tags):
+            return meta_graph_def
+    raise IOError('Couldn\'t load saved_model')
+
+
 class Model:
 
     default_tag = tf.saved_model.tag_constants.SERVING
 
-    def __init__(self, path, tags, loop):
-        self.sess = tf.Session()
+    def __init__(self, path, tags, loop, sess_args=None):
+        if sess_args is None:
+            sess_args = {}
+
+        # load ConfigProto from saved model
+        try:
+            meta_graph_def = load_saved_model(path, tags)
+            config = tf.ConfigProto()
+            meta_graph_def.meta_info_def.any_info.Unpack(config)
+        except Exception:
+            raise IOError('Couldn\'t load saved_model')
+
+        if 'config' in sess_args:
+            config.MergeFrom(sess_args['config'])
+        sess_args['config'] = config
+
+        self.sess = tf.Session(**sess_args)
         self.loop = loop
         try:
             self.graph_def = tf.saved_model.loader.load(self.sess, tags, path)
-        except Exception as e:
+        except Exception:
             raise IOError('Couldn\'t load saved_model')
 
     async def parse(self, method, request, validate_batch):

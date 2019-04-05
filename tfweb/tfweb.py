@@ -25,7 +25,9 @@ async def init(loop, args):
         tags = args.tags.split(',')
     else:
         tags = [Model.default_tag]
-    model = Model(args.model, tags, loop)
+    model = Model(args.model, tags, loop, sess_args={
+            'target': args.sess_target
+    })
     batcher = Batcher(model, loop, args.batch_size)
 
     web_app = web.Application(loop=loop, client_max_size=args.request_size)
@@ -112,6 +114,11 @@ def main(args):
             type=int,
             default=8080,
             help='tfweb model access port')
+    parser.add_argument(
+            '--sess_target',
+            type=str,
+            default='zrpc://tpc://localhost:5501',
+            help='session target for executing inference jobs')
     args = parser.parse_args(args)
 
     loop = asyncio.get_event_loop()
