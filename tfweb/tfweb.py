@@ -165,6 +165,7 @@ def main(args):
                 pass
 
     if args.piddir is not None:
+        import pid
         with pid.PidFile(**pidfile_args(args)) as pf:
             serve()
     else:
