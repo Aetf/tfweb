@@ -131,7 +131,8 @@ def main(args):
         runtime = Path(td)
 
         upstreams = []
-        for port in range(args.port + 1, args.num_replicas):
+        upport = args.port + 1
+        for port in range(upport, upport + args.num_replicas):
             upstreams.append(start_tfweb(args, port, runtime.joinpath('pid')))
 
         balancer = start_balancer(args, runtime)
