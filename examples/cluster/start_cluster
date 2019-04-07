@@ -55,10 +55,10 @@ def render_gobetween_config(src, dst, variables):
 def start_tfweb(args, port, piddir):
     cmd = [
         'tfweb',
-        '--model=' + args.model,
-        '--port=' + port,
+        '--model=' + str(args.model),
+        '--port=' + str(port),
         '--piddir=' + str(piddir),
-        '--sess_target=' + args.sess_target
+        '--sess_target=' + str(args.sess_target)
     ]
 
     return Popen(cmd)
