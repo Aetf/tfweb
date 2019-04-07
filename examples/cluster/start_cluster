@@ -12,15 +12,18 @@ from contextlib import contextmanager
 from types import SimpleNamespace
 
 
+@contextmanager
 def runtime_dir_ctx(args):
+    ctx = TemporaryDirectory
     if args.runtime_dir is None:
         @contextmanager
         def dummy():
-            yield SimpleNamespace(name=args.runtime_dir)
+            yield args.runtime_dir
 
-        return dummy
+        ctx = dummy
 
-    return TemporaryDirectory
+    with ctx() as td:
+        yield td
 
 
 def gracefully_wait(proc, **kwargs):
@@ -124,8 +127,8 @@ def main(args):
         help='don\'t start the balancer')
     args = parser.parse_args(args)
 
-    with runtime_dir_ctx(args)() as td:
-        runtime = Path(td.name)
+    with runtime_dir_ctx(args) as td:
+        runtime = Path(td)
 
         upstreams = []
         for port in range(args.port + 1, args.num_replicas):
