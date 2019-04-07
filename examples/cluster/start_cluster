@@ -1,0 +1,149 @@
+#! /usr/bin/env python
+from __future__ import absolute_import, print_function, division, unicode_literals
+
+import sys
+import argparse
+import string
+import subprocess as sp
+from subprocess improt Popen
+from tempfile import TemporaryDirectory
+from pathlib import Path
+from contextlib import contextmanager
+from types import SimpleNamespace
+
+
+def runtime_dir_ctx(args):
+    if args.runtime_dir is None:
+        @contextmanager
+        def dummy():
+            yield SimpleNamespace(name=args.runtime_dir)
+
+        return dummy
+
+    return TemporaryDirectory
+
+
+def gracefully_wait(proc, **kwargs):
+    if proc is None:
+        return
+    return proc.wait(**kwargs)
+
+
+def gracefully_kill(proc):
+    if proc is None:
+        return
+
+    proc.terminate()
+    try:
+        proc.wait(timeout=1)
+    except TimeoutError:
+        proc.kill()
+
+
+def render_gobetween_config(src, dst, variables):
+    # type: (Path, Path) -> None
+    """Render and the gobetween config to a temporary file"""
+    tpl = string.Template(src.read_text())
+    content = tpl.substitute(variables)
+    dst.write_text(content, encoding='ascii')
+    return dst
+
+
+def start_tfweb(args, port, piddir):
+    cmd = [
+        'tfweb',
+        '--model=' + args.model,
+        '--port=' + port,
+        '--piddir=' + str(piddir),
+        '--sess_target=' + args.sess_target
+    ]
+
+    return Popen(cmd)
+
+
+def start_balancer(args, runtime):
+    if args.no_balancer:
+        return None
+
+    self_dir = Path(__file__).resolve().parent
+    tfweb_available = self_dir.joinpath('tfweb_available').resolve()
+    tpl = self_dir.joinpath('tfweb.toml.tpl')
+
+    variables = {
+        'port': str(args.port),
+        'tfweb_available': str(tfweb_available),
+        'piddir': str(runtime.joinpath('pid').resolve())
+    }
+
+    toml = runtime.joinpath('tfweb.toml')
+    render_gobetween_config(self_dir.joinpath('tfweb.toml.tpl'), toml, variables)
+
+    cmd = [
+        'gobetween',
+        'from-file',
+        str(toml),
+    ]
+    return Popen(cmd)
+
+
+def main(args):
+    parser = argparse.ArgumentParser(description='start_cluster')
+    parser.add_argument(
+            '--model',
+            type=str,
+            default='./examples/basic/model',
+            help='path to saved_model directory (can be GCS)')
+    parser.add_argument(
+            '--port',
+            type=int,
+            default=8080,
+            help='tfweb model access port')
+    parser.add_argument(
+            '-l', '--listen',
+            type=str,
+            default='0.0.0.0',
+            help='IP address to listen')
+    parser.add_argument(
+            '--sess_target',
+            type=str,
+            default='zrpc://tcp://localhost:5501',
+            help='session target for executing inference jobs')
+    parser.add_argument(
+        '-n', '--num_replicas',
+        type=int,
+        default=1,
+        help='number of replicas to start')
+    parser.add_argument(
+        '--runtime_dir',
+        type=str,
+        default=None,
+        help='runtime directory. Will use random temporary dir if not specified')
+    parser.add_argument(
+        '--no_balancer',
+        action='store_no',
+        help='don\'t start the balancer')
+    args = parser.parse_args(args)
+
+    with runtime_dir_ctx(args)() as td:
+        runtime = Path(td.name)
+
+        upstreams = []
+        for port in range(args.port + 1, args.num_replicas):
+            upstreams.append(start_tfweb(args, port, runtime.joinpath('pid')))
+
+        balancer = start_balancer(args, runtime)
+
+        try:
+            gracefully_wait(balancer)
+            for up in upstreams:
+                gracefully_wait(up)
+        except KeyboardInterrupt:
+            # kill all children
+            gracefully_kill(balancer)
+            for up in upstreams:
+                gracefully_kill(up)
+
+
+if __name__ == "__main__":
+    import sys
+    main(sys.argv)
