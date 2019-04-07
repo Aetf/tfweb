@@ -120,7 +120,7 @@ def main(args):
         help='runtime directory. Will use random temporary dir if not specified')
     parser.add_argument(
         '--no_balancer',
-        action='store_no',
+        action='store_false',
         help='don\'t start the balancer')
     args = parser.parse_args(args)
 
