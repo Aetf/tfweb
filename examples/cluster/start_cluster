@@ -38,8 +38,8 @@ def gracefully_kill(proc):
 
     proc.terminate()
     try:
-        proc.wait(timeout=1)
-    except TimeoutError:
+        proc.wait(timeout=5)
+    except sp.TimeoutExpired:
         proc.kill()
 
 
