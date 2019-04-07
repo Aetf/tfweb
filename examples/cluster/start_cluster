@@ -9,7 +9,6 @@ from subprocess import Popen
 from tempfile import TemporaryDirectory
 from pathlib import Path
 from contextlib import contextmanager
-from types import SimpleNamespace
 
 
 @contextmanager
@@ -38,7 +37,7 @@ def gracefully_kill(proc):
 
     proc.terminate()
     try:
-        proc.wait(timeout=5)
+        proc.wait(timeout=1)
     except sp.TimeoutExpired:
         proc.kill()
 
@@ -68,8 +67,10 @@ def start_balancer(args, runtime):
     if args.no_balancer:
         return None
 
+    print("Starting balancer at port {}".format(args.port))
+
     self_dir = Path(__file__).resolve().parent
-    tfweb_available = self_dir.joinpath('tfweb_available').resolve()
+    tfweb_available = self_dir.joinpath('tfweb-available').resolve()
     tpl = self_dir.joinpath('tfweb.toml.tpl')
 
     variables = {
@@ -79,7 +80,7 @@ def start_balancer(args, runtime):
     }
 
     toml = runtime.joinpath('tfweb.toml')
-    render_gobetween_config(self_dir.joinpath('tfweb.toml.tpl'), toml, variables)
+    render_gobetween_config(tpl, toml, variables)
 
     cmd = [
         'gobetween',
@@ -123,7 +124,7 @@ def main(args):
         help='runtime directory. Will use random temporary dir if not specified')
     parser.add_argument(
         '--no_balancer',
-        action='store_false',
+        action='store_true',
         help='don\'t start the balancer')
     args = parser.parse_args(args)
 
@@ -133,19 +134,25 @@ def main(args):
         upstreams = []
         upport = args.port + 1
         for port in range(upport, upport + args.num_replicas):
+            print("Starting tfweb server at port {}".format(port))
             upstreams.append(start_tfweb(args, port, runtime.joinpath('pid')))
 
         balancer = start_balancer(args, runtime)
 
         try:
+            print("Waiting balancer to exit")
             gracefully_wait(balancer)
+            print("Waiting tfweb servers to exit")
             for up in upstreams:
                 gracefully_wait(up)
         except KeyboardInterrupt:
             # kill all children
+            print("Killing balancer")
             gracefully_kill(balancer)
+            print("Killing tfweb servers")
             for up in upstreams:
                 gracefully_kill(up)
+        print("Bye.")
 
 
 if __name__ == "__main__":
