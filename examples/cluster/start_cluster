@@ -15,7 +15,7 @@ from types import SimpleNamespace
 @contextmanager
 def runtime_dir_ctx(args):
     ctx = TemporaryDirectory
-    if args.runtime_dir is None:
+    if args.runtime_dir is not None:
         @contextmanager
         def dummy():
             yield args.runtime_dir
