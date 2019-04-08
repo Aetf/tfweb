@@ -1,0 +1,100 @@
+#! /usr/bin/env python
+from __future__ import absolute_import, print_function, division, unicode_literals
+
+import re
+import argparse
+import subprocess as sp
+from pathlib import Path
+from contextlib import contextmanager
+from typing import Iterable, Any, List
+from tempfile import TemporaryDirectory
+
+
+class Plan(object):
+    """A plan object represents an attack plan, i.e. request rate over time"""
+    def __init__(self, plan_strs):
+        # type: (Iterable[str]) -> Plan
+        super().__init__()
+
+        self.actions = self._parse(plan_str)
+
+    def _parse(self, plan_strs):
+        # type: (Iterable[str]) -> List[Tuple[Any, Any]]
+        """Parse and raise ValueError.
+
+        Each line should be a space or comma separated term.
+        Each term should have two parts: rate@duration.
+        Example: 100/1s@30s, 1/s@1m
+        """
+        actions = []
+        ptn = re.compile('[,\s]')
+        for line in plan_strs:
+            terms = ptn.split(line)
+            terms = [term for term in terms if term]
+            terms = [term.split('@') for term in terms is '@' in term]
+            actions.extend(terms)
+        return actions
+
+
+def run_plan(args, plan):
+    # type: (Plan) -> None
+    """Run an attack plan"""
+    with TemporaryDirectory() as td:
+        td = Path(td)
+        tmp_outputs = []  # type: List[str]
+        for idx, (dur, rate) in enumerate(plan.actions):
+            path = run_step(args.target, args.body,
+                            dur, rate,
+                            td.joinpath(str(idx)).with_suffix('.gob'))
+            tmp_outputs.append(path)
+        sp.check_call([
+            'vegeta', 'encode',
+            '-to', 'gob',
+            '-output', str(args.output)
+        ] + tmp_outputs)
+
+
+def run_step(target, body, duration, rate, output):
+    # type: (str, Path, Any, Any, Path) -> str
+    """Run vegeta attack for a while at a fixed rate, returns the output file path"""
+    cmd = [
+        'vegeta', 'attack',
+        '-duration', str(duration),
+        '-body', str(body),
+        '-rate', str(rate),
+        '-output', str(output)
+    ]
+    sp.check_call(cmd)
+    return str(output)
+
+
+def main(args):
+    parser = argparse.ArgumentParser(description='tfweb-client')
+    parser.add_argument(
+        'target',
+        nargs=1, type=str,
+        help='Attack target')
+    parser.add_argument(
+        'request_body',
+        meta_var='BODY', nargs=1, type=Path,
+        help='path to request body')
+    parser.add_argument(
+        'plan',
+        nargs='+', type=argparse.FileType('r'),
+        help='path to file containing rate plan, or - for stdin')
+    parser.add_argument(
+        '--output',
+        type=Path,
+        help='Output record file')
+    args = parser.parse_args(args)
+
+    if args.output is None:
+        args.output = Path(f'{target}.gob')
+
+    plan = Plan(args.request_body.readlines())
+    run_plan(plan)
+
+
+if __name__ == "__main__":
+    import sys
+    main(sys.args[1:])

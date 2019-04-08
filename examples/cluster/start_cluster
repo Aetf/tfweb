@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 from __future__ import absolute_import, print_function, division, unicode_literals
 
-import sys
 import argparse
 import string
 import subprocess as sp
@@ -93,25 +92,25 @@ def start_balancer(args, runtime):
 def main(args):
     parser = argparse.ArgumentParser(description='start_cluster')
     parser.add_argument(
-            '--model',
-            type=str,
-            default='./examples/basic/model',
-            help='path to saved_model directory (can be GCS)')
+        '--model',
+        type=str,
+        default='./examples/basic/model',
+        help='path to saved_model directory (can be GCS)')
     parser.add_argument(
-            '--port',
-            type=int,
-            default=8080,
-            help='tfweb model access port')
+        '--port',
+        type=int,
+        default=8080,
+        help='tfweb model access port')
     parser.add_argument(
-            '-l', '--listen',
-            type=str,
-            default='0.0.0.0',
-            help='IP address to listen')
+        '-l', '--listen',
+        type=str,
+        default='0.0.0.0',
+        help='IP address to listen')
     parser.add_argument(
-            '--sess_target',
-            type=str,
-            default='zrpc://tcp://localhost:5501',
-            help='session target for executing inference jobs')
+        '--sess_target',
+        type=str,
+        default='zrpc://tcp://localhost:5501',
+        help='session target for executing inference jobs')
     parser.add_argument(
         '-n', '--num_replicas',
         type=int,
