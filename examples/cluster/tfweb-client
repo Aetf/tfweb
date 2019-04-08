@@ -43,6 +43,7 @@ def run_plan(args, plan):
         td = Path(td)
         tmp_outputs = []  # type: List[str]
         for idx, (rate, dur) in enumerate(plan.actions):
+            print(f'Attack {args.target} at rate {rate} for {dur}')
             path = run_step(args.target, args.request_body,
                             dur, rate,
                             td.joinpath(str(idx)).with_suffix('.gob'))
