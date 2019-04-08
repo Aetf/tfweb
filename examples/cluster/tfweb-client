@@ -72,15 +72,15 @@ def main(args):
     parser = argparse.ArgumentParser(description='tfweb-client')
     parser.add_argument(
         'target',
-        metavar='TARGET', nargs=1, type=str,
+        metavar='TARGET', type=str,
         help='Attack target')
     parser.add_argument(
         'request_body',
-        metavar='BODY', nargs=1, type=Path,
+        metavar='BODY', type=Path,
         help='path to request body')
     parser.add_argument(
-        'plan', metavar='PLAN',
-        nargs=1, type=argparse.FileType('r'),
+        'plan',
+        metavar='PLAN', type=argparse.FileType('r'),
         help='path to file containing rate plan, or - for stdin')
     parser.add_argument(
         '--output',
