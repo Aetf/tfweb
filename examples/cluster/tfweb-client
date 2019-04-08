@@ -42,7 +42,7 @@ def run_plan(args, plan):
     with TemporaryDirectory() as td:
         td = Path(td)
         tmp_outputs = []  # type: List[str]
-        for idx, (dur, rate) in enumerate(plan.actions):
+        for idx, (rate, dur) in enumerate(plan.actions):
             path = run_step(args.target, args.request_body,
                             dur, rate,
                             td.joinpath(str(idx)).with_suffix('.gob'))
