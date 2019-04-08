@@ -31,7 +31,7 @@ class Plan(object):
         for line in plan_strs:
             terms = ptn.split(line)
             terms = [term for term in terms if term]
-            terms = [term.split('@') for term in terms is '@' in term]
+            terms = [term.split('@') for term in terms if '@' in term]
             actions.extend(terms)
         return actions
 
