@@ -44,15 +44,20 @@ def run_plan(args, plan):
         tmp_outputs = []  # type: List[str]
         for idx, (rate, dur) in enumerate(plan.actions):
             print(f'Attack {args.target} at rate {rate} for {dur}')
-            path = run_step(args.target, args.request_body,
-                            dur, rate,
-                            td.joinpath(str(idx)).with_suffix('.gob'))
-            tmp_outputs.append(path)
-        sp.check_call([
-            'vegeta', 'encode',
-            '-to', 'gob',
-            '-output', str(args.output)
-        ] + tmp_outputs)
+            output = td.joinpath(str(idx)).with_suffix('.gob')
+            run_step(args.target, args.request_body,
+                     dur, rate, output)
+            tmp_outputs.append(output)
+        if not args.no_merge:
+            sp.check_call([
+                'vegeta', 'encode',
+                '-to', 'gob',
+                '-output', str(args.output)
+            ] + [str(p) for p in tmp_outputs])
+        else:
+            args.output.mkdir(exist_ok=True)
+            for p in tmp_outputs:
+                p.rename(args.output.joinpath(p.name))
 
 
 def run_step(target, body, duration, rate, output):
@@ -90,6 +95,10 @@ def main(args):
         '--output', default='output.gob',
         type=Path,
         help='Output record file')
+    parser.add_argument(
+        '--no_merge',
+        action='store_true',
+        help='Do not merge the results')
     args = parser.parse_args(args)
 
     plan = Plan(args.plan.readlines())
