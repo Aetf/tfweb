@@ -2,6 +2,7 @@
 from __future__ import absolute_import, print_function, division, unicode_literals
 
 import re
+import shutil
 import argparse
 import subprocess as sp
 from pathlib import Path
@@ -55,9 +56,7 @@ def run_plan(args, plan):
                 '-output', str(args.output)
             ] + [str(p) for p in tmp_outputs])
         else:
-            args.output.mkdir(exist_ok=True)
-            for p in tmp_outputs:
-                p.rename(args.output.joinpath(p.name))
+            shutil.move(td, args.output)
 
 
 def run_step(target, body, duration, rate, output):
