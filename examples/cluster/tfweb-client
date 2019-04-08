@@ -16,7 +16,7 @@ class Plan(object):
         # type: (Iterable[str]) -> Plan
         super().__init__()
 
-        self.actions = self._parse(plan_str)
+        self.actions = self._parse(plan_strs)
 
     def _parse(self, plan_strs):
         # type: (Iterable[str]) -> List[Tuple[Any, Any]]
