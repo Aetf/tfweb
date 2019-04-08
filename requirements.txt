@@ -2,4 +2,3 @@ uvloop>=0.12
 aiohttp
 aiohttp_cors
 grpclib
-pid

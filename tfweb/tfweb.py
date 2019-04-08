@@ -1,5 +1,6 @@
 import sys
 import argparse
+from contextlib import contextmanager
 
 import asyncio
 import uvloop
@@ -70,19 +71,22 @@ async def init(loop, args):
     return web_app, grpc_app
 
 
-def pidfile_args(args):
+@contextmanager
+def pidfile(args):
     if args.listen == '0.0.0.0':
         import socket
         ip = socket.gethostbyname(socket.gethostname())
     else:
         ip = args.listen
     port = args.port
-    return {
-        'piddir': args.piddir,
-        'pidname': '{}:{}'.format(ip, port),
-        'enforce_dotpid_postfix': False,
-        'lock_pidfile': False,
-    }
+    path = Path(args.piddir).joinpath('{}:{}'.format(ip, port))
+    try:
+        path.parent.mkdir(exist_ok=True, parents=True)
+        # TODO: use real pid
+        path.write_text('123')
+        yield
+    finally:
+        path.unlink()
 
 
 def main(args):
@@ -165,8 +169,7 @@ def main(args):
                 pass
 
     if args.piddir is not None:
-        import pid
-        with pid.PidFile(**pidfile_args(args)) as pf:
+        with pidfile(args):
             serve()
     else:
         serve()
