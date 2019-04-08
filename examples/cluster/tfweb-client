@@ -43,7 +43,7 @@ def run_plan(args, plan):
         td = Path(td)
         tmp_outputs = []  # type: List[str]
         for idx, (dur, rate) in enumerate(plan.actions):
-            path = run_step(args.target, args.body,
+            path = run_step(args.target, args.request_body,
                             dur, rate,
                             td.joinpath(str(idx)).with_suffix('.gob'))
             tmp_outputs.append(path)
@@ -72,15 +72,15 @@ def main(args):
     parser = argparse.ArgumentParser(description='tfweb-client')
     parser.add_argument(
         'target',
-        nargs=1, type=str,
+        metavar='TARGET', nargs=1, type=str,
         help='Attack target')
     parser.add_argument(
         'request_body',
-        meta_var='BODY', nargs=1, type=Path,
+        metavar='BODY', nargs=1, type=Path,
         help='path to request body')
     parser.add_argument(
-        'plan',
-        nargs='+', type=argparse.FileType('r'),
+        'plan', metavar='PLAN',
+        nargs=1, type=argparse.FileType('r'),
         help='path to file containing rate plan, or - for stdin')
     parser.add_argument(
         '--output',
@@ -89,12 +89,12 @@ def main(args):
     args = parser.parse_args(args)
 
     if args.output is None:
-        args.output = Path(f'{target}.gob')
+        args.output = Path(f'{args.target}.gob')
 
-    plan = Plan(args.request_body.readlines())
+    plan = Plan(args.plan.readlines())
     run_plan(plan)
 
 
 if __name__ == "__main__":
     import sys
-    main(sys.args[1:])
+    main(sys.argv[1:])
