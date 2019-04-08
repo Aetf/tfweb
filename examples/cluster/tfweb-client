@@ -87,13 +87,10 @@ def main(args):
         metavar='PLAN', type=argparse.FileType('r'),
         help='path to file containing rate plan, or - for stdin')
     parser.add_argument(
-        '--output',
+        '--output', default='output.gob'
         type=Path,
         help='Output record file')
     args = parser.parse_args(args)
-
-    if args.output is None:
-        args.output = Path(f'{args.target}.gob')
 
     plan = Plan(args.plan.readlines())
     run_plan(args, plan)
