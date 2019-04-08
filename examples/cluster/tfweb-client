@@ -65,7 +65,10 @@ def run_step(target, body, duration, rate, output):
         '-rate', str(rate),
         '-output', str(output)
     ]
-    sp.check_call(cmd)
+    v = sp.Popen(cmd, stdin=sp.PIPE)
+    v.stdin.write(f'POST http://{target}\n'.encode('utf-8'))
+    v.stdin.close()
+    v.wait()
     return str(output)
 
 
