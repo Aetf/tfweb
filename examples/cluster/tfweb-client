@@ -92,7 +92,7 @@ def main(args):
         args.output = Path(f'{args.target}.gob')
 
     plan = Plan(args.plan.readlines())
-    run_plan(plan)
+    run_plan(args, plan)
 
 
 if __name__ == "__main__":
