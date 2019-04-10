@@ -56,7 +56,7 @@ def run_plan(args, plan):
                 '-output', str(args.output)
             ] + [str(p) for p in tmp_outputs])
         else:
-            shutil.copytree(td, args.output)
+            shutil.copytree(str(td), str(args.output))
 
 
 def run_step(target, body, duration, rate, output):
@@ -106,7 +106,7 @@ def main(args):
             input("Press any key to delete and continue (or ctrl-c to abort):")
         except:
             pass
-        shutil.rmtree(args.output)
+        shutil.rmtree(str(args.output))
 
     plan = Plan(args.plan.readlines())
     run_plan(args, plan)

@@ -1,6 +1,10 @@
 [logging]
 level = "warn"
 
+[api]
+enabled = true
+bind = ":8888"
+
 [defaults]
 max_connections = 2000
 client_idle_timeout = "10m"
