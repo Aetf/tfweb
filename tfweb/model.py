@@ -80,6 +80,7 @@ class Model:
         except Exception:
             raise IOError("Couldn't load saved_model")
 
+        # let ConfigProto given from argumnts override the one we have
         if "config" in sess_args:
             config.MergeFrom(sess_args["config"])
         sess_args["config"] = config

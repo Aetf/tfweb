@@ -6,6 +6,8 @@ from pathlib import Path
 import asyncio
 import uvloop
 
+import tf
+
 from aiohttp import web
 import aiohttp_cors
 
@@ -28,8 +30,11 @@ async def init(loop, args):
         tags = args.tags.split(',')
     else:
         tags = [Model.default_tag]
+    config = tf.ConfigProto()
+    config.salus_options.resource_map.persistant["SCHED:PRIORITY"] = 10
     model = Model(args.model, tags, loop, sess_args={
-            'target': args.sess_target
+            'target': args.sess_target,
+            'config': config
     })
     batcher = Batcher(model, loop, args.batch_size)
 
