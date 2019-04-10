@@ -36,8 +36,9 @@ def gracefully_kill(proc):
 
     proc.terminate()
     try:
-        proc.wait(timeout=1)
+        proc.wait(timeout=2)
     except sp.TimeoutExpired:
+        print("Process not stop after SIGTERM, trying SIGKILL")
         proc.kill()
 
 

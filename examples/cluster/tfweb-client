@@ -56,7 +56,7 @@ def run_plan(args, plan):
                 '-output', str(args.output)
             ] + [str(p) for p in tmp_outputs])
         else:
-            shutil.move(td, args.output)
+            shutil.copytree(td, args.output)
 
 
 def run_step(target, body, duration, rate, output):
@@ -99,6 +99,14 @@ def main(args):
         action='store_true',
         help='Do not merge the results')
     args = parser.parse_args(args)
+
+    if args.output.exists():
+        print(f"Output directory '{args.output}' already exists.")
+        try:
+            input("Press any key to delete and continue (or ctrl-c to abort):")
+        except:
+            pass
+        shutil.rmtree(args.output)
 
     plan = Plan(args.plan.readlines())
     run_plan(args, plan)
