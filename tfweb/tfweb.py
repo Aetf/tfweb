@@ -6,7 +6,7 @@ from pathlib import Path
 import asyncio
 import uvloop
 
-import tf
+import tensorflow as tf
 
 from aiohttp import web
 import aiohttp_cors
