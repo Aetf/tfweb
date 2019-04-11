@@ -1,6 +1,9 @@
+import logging
+import functools
+import time
+
 import tensorflow as tf
 import numpy as np
-import functools
 
 from pathlib import Path
 
@@ -8,6 +11,9 @@ from tensorflow.core.protobuf import saved_model_pb2, meta_graph_pb2
 from google.protobuf import message, text_format
 
 dir(tf.contrib)  # contrib ops lazily loaded
+
+
+logger = logging.getLogger(__name__)
 
 
 def parse_saved_model(export_dir):
@@ -138,9 +144,15 @@ class Model:
 
     async def query(self, query_params, result_params):
         """ TODO: Interface via FIFO queue """
+        def sess_run():
+            st = time.perf_counter()
+            self.sess.run(result_params, feed_dict=query_params)
+            ed = time.perf_counter()
+            logger.info("Response compute latency: %.6fs", ed - st)
         return await self.loop.run_in_executor(
             None,
-            functools.partial(self.sess.run, result_params, feed_dict=query_params),
+            sess_run,
+            #functools.partial(self.sess.run, result_params, feed_dict=query_params),
         )
 
     def list_signatures(self):
